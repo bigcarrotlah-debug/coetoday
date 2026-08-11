@@ -134,6 +134,22 @@ h2{font-family:var(--display);font-weight:700;font-size:30px;letter-spacing:.2px
 .tabs button[aria-pressed="true"]{background:var(--green);border-color:var(--green);color:#fff}
 #chart{width:100%;height:auto;display:block}
 .chart-note{color:var(--muted);font-size:12.5px;margin-top:10px}
+.range{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 12px}
+.range button{font-family:var(--mono);font-weight:600;font-size:12px;padding:5px 12px;border-radius:8px;border:1.5px solid var(--line);background:#fff;color:var(--muted);cursor:pointer;transition:all .15s}
+.range button:hover{border-color:var(--green);color:var(--ink)}
+.range button[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:#fff}
+
+/* ---------- Past results table ---------- */
+.tbl-tools{display:flex;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap}
+.tbl-tools label{font-size:13px;color:var(--muted);font-weight:600}
+.tbl-tools select{font-family:var(--body);font-size:14px;font-weight:600;padding:7px 12px;border-radius:9px;border:1.5px solid var(--line);background:#fff;color:var(--ink)}
+.tbl-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.tbl{width:100%;border-collapse:collapse;font-size:13.5px;min-width:560px}
+.tbl th{font-family:var(--display);font-weight:600;font-size:13px;letter-spacing:1.2px;text-transform:uppercase;color:var(--muted);text-align:right;padding:9px 10px;border-bottom:2px solid var(--line)}
+.tbl th:first-child{text-align:left}
+.tbl td{font-family:var(--mono);font-variant-numeric:tabular-nums;text-align:right;padding:8px 10px;border-bottom:1px solid var(--line)}
+.tbl td:first-child{font-family:var(--body);font-weight:600;text-align:left;white-space:nowrap}
+.tbl tr:hover td{background:#FAFCFA}
 
 /* ---------- PQP ---------- */
 .pqp-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px}
@@ -223,6 +239,13 @@ footer a{color:#fff}
         <button aria-pressed="false" data-cat="D">Cat D</button>
         <button aria-pressed="false" data-cat="E">Cat E</button>
       </div>
+      <div class="range" id="range-tabs" role="group" aria-label="Choose time range">
+        <button aria-pressed="false" data-range="1">1Y</button>
+        <button aria-pressed="false" data-range="3">3Y</button>
+        <button aria-pressed="true" data-range="5">5Y</button>
+        <button aria-pressed="false" data-range="10">10Y</button>
+        <button aria-pressed="false" data-range="0">All</button>
+      </div>
       <svg id="chart" viewBox="0 0 720 300" role="img" aria-label="COE price history chart">
         <defs><linearGradient id="areafill" x1="0" y1="0" x2="0" y2="1">
           <stop offset="0%" stop-color="#046A38" stop-opacity=".22"/>
@@ -239,6 +262,24 @@ footer a{color:#fff}
     <h2>PQP This Month <span style="font-size:19px;color:var(--muted)">(COE renewal)</span></h2>
     <div class="sec-sub">The Prevailing Quota Premium — a 3-month moving average — is what you pay to <b>renew</b> an existing COE for 5 or 10 years instead of bidding.</div>
     <div class="card"><div class="pqp-grid" id="pqp-grid"></div></div>
+  </section>
+
+  <!-- PAST RESULTS -->
+  <section id="history">
+    <h2>Past COE Results</h2>
+    <div class="sec-sub">Every bidding exercise on record. Pick a year to browse.</div>
+    <div class="card">
+      <div class="tbl-tools">
+        <label for="year-select">Year</label>
+        <select id="year-select" aria-label="Filter results by year"></select>
+      </div>
+      <div class="tbl-scroll">
+        <table class="tbl" aria-live="polite">
+          <thead><tr><th>Exercise</th><th>Cat A</th><th>Cat B</th><th>Cat C</th><th>Cat D</th><th>Cat E</th></tr></thead>
+          <tbody id="tbl-body"></tbody>
+        </table>
+      </div>
+    </div>
   </section>
 
   <!-- AD SLOT 2 -->
@@ -306,7 +347,9 @@ const CAT_META = {
 const fmt = n => n==null ? "—" : "$" + n.toLocaleString("en-SG");
 let DATA = null;
 
-fetch("/data/latest.json").then(r=>r.json()).then(d=>{ DATA=d; render(); drawChart("A"); }).catch(()=>{
+let chartCat="A", chartYears=5;
+
+fetch("/data/latest.json").then(r=>r.json()).then(d=>{ DATA=d; render(); drawChart(); initHistory(); }).catch(()=>{
   document.getElementById("asof").textContent = "Couldn't load results. Refresh to try again.";
 });
 
@@ -388,9 +431,11 @@ function nextBiddingClose(){
 setInterval(tickCountdown, 1000); setTimeout(tickCountdown, 400);
 
 /* Main chart with area fill */
-function drawChart(cat){
+function drawChart(){
+  const cat = chartCat;
   const g = document.getElementById("chart-g");
-  const pts = DATA.exercises.filter(e=>e.premiums[cat]!=null)
+  const cutoff = chartYears>0 ? Date.now() - chartYears*365.25*86400000 : 0;
+  const pts = DATA.exercises.filter(e=>e.premiums[cat]!=null && new Date(e.close_date).getTime()>=cutoff)
     .map(e=>({x:new Date(e.close_date).getTime(), y:e.premiums[cat], label:e.label}));
   if (pts.length<2){ g.innerHTML=""; return; }
   const W=720,H=300,P={l:64,r:16,t:18,b:34};
@@ -420,8 +465,32 @@ document.getElementById("cat-tabs").addEventListener("click", e=>{
   const b = e.target.closest("button"); if(!b) return;
   document.querySelectorAll("#cat-tabs button").forEach(x=>x.setAttribute("aria-pressed","false"));
   b.setAttribute("aria-pressed","true");
-  drawChart(b.dataset.cat);
+  chartCat = b.dataset.cat;
+  drawChart();
 });
+document.getElementById("range-tabs").addEventListener("click", e=>{
+  const b = e.target.closest("button"); if(!b) return;
+  document.querySelectorAll("#range-tabs button").forEach(x=>x.setAttribute("aria-pressed","false"));
+  b.setAttribute("aria-pressed","true");
+  chartYears = parseInt(b.dataset.range, 10);
+  drawChart();
+});
+
+/* Past results table with year filter */
+function initHistory(){
+  const sel = document.getElementById("year-select");
+  const years = [...new Set(DATA.exercises.map(e=>e.close_date.slice(0,4)))].sort().reverse();
+  sel.innerHTML = years.map(y=>`<option value="${y}">${y}</option>`).join("");
+  sel.addEventListener("change", ()=>renderHistory(sel.value));
+  renderHistory(years[0]);
+}
+function renderHistory(year){
+  const body = document.getElementById("tbl-body");
+  const rows = DATA.exercises.filter(e=>e.close_date.startsWith(year)).slice().reverse();
+  body.innerHTML = rows.map(e=>
+    `<tr><td>${e.label}</td>`+["A","B","C","D","E"].map(c=>`<td>${fmt(e.premiums[c])}</td>`).join("")+`</tr>`
+  ).join("");
+}
 </script>
 </body>
 </html>
