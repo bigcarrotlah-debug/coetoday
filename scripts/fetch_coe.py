@@ -13,7 +13,7 @@ import json, math, urllib.request, urllib.parse
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
-DATASET_ID = "REPLACE_WITH_DATASET_ID"   # <-- verify on data.gov.sg
+DATASET_ID = "d_69b3380ad7e51aff3a7dcc84eba52b8a"
 API = "https://api-production.data.gov.sg/v2/public/api/datasets/{}/poll-download"
 OUT = Path(__file__).resolve().parent.parent / "data" / "latest.json"
 SGT = timezone(timedelta(hours=8))
