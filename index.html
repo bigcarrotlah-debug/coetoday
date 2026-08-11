@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="en-SG">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>COE Prices Today — Latest Bidding Results & Trends | COETODAY.SG</title>
+<meta name="description" content="Latest Singapore COE bidding results the moment they close. Live premiums for Cat A, B, C, D and E, price trends, PQP for renewal, and the next bidding countdown.">
+<link rel="canonical" href="https://coetoday.sg/">
+<meta name="geo.region" content="SG">
+<meta name="geo.placename" content="Singapore">
+
+<!-- Open Graph -->
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://coetoday.sg/">
+<meta property="og:title" content="COE Prices Today — Latest Bidding Results">
+<meta property="og:description" content="Singapore COE results the moment bidding closes. All 5 categories, trends and next-round countdown.">
+<meta property="og:image" content="https://coetoday.sg/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:locale" content="en_SG">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="COE Prices Today — Latest Bidding Results">
+<meta name="twitter:image" content="https://coetoday.sg/og-image.png">
+
+<!-- Icons -->
+<link rel="icon" href="/favicon.ico" sizes="32x32">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<meta name="theme-color" content="#035C31">
+
+<!-- Fonts -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Mono:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<!-- Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-M6YJ63PTVZ"></script>
+<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-M6YJ63PTVZ');</script>
+
+<!-- Structured data -->
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"WebSite","name":"COETODAY.SG","url":"https://coetoday.sg/","description":"Latest Singapore COE bidding results, price trends and PQP for renewal.","inLanguage":"en-SG"}
+</script>
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[
+{"@type":"Question","name":"When are COE bidding results released?","acceptedAnswer":{"@type":"Answer","text":"COE open bidding is held twice a month, usually closing on the first and third Wednesday at 4:00pm Singapore time. Results are published by LTA shortly after the close, and this page updates within minutes."}},
+{"@type":"Question","name":"What are the COE categories?","acceptedAnswer":{"@type":"Answer","text":"Cat A: cars up to 1,600cc and 130bhp (incl. EVs up to 110kW). Cat B: larger or more powerful cars. Cat C: goods vehicles and buses. Cat D: motorcycles. Cat E: Open category, usable for any vehicle except motorcycles."}},
+{"@type":"Question","name":"What is PQP?","acceptedAnswer":{"@type":"Answer","text":"The Prevailing Quota Premium (PQP) is the 3-month moving average of COE prices for a category. It is the amount you pay to renew the COE of an existing vehicle for 5 or 10 years, instead of bidding."}},
+{"@type":"Question","name":"Why do COE prices change?","acceptedAnswer":{"@type":"Answer","text":"COE supply is capped by the Vehicle Quota System. Prices move with quota size, deregistrations, dealer demand and the wider economy, so premiums can swing significantly between bidding exercises."}},
+{"@type":"Question","name":"Where does this data come from?","acceptedAnswer":{"@type":"Answer","text":"All results are drawn from the Land Transport Authority's official COE bidding results published on data.gov.sg. COETODAY.SG is an independent tracker and is not affiliated with LTA."}}
+]}
+</script>
+
+<style>
+:root{
+  --green:#046A38; --green-deep:#03502B; --green-dk:#035C31;
+  --yellow:#FFD100; --paper:#F4F6F3; --board:#FFFFFF;
+  --ink:#131A16; --muted:#5C6963; --line:#E4E9E4;
+  --up:#C0271A; --up-bg:#FCEBE9; --down:#0B7A4B; --down-bg:#E7F4EC;
+  --shadow:0 12px 34px -14px rgba(9,42,25,.35);
+  --display:'Barlow Condensed',sans-serif; --body:'Inter',system-ui,sans-serif; --mono:'IBM Plex Mono',monospace;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{font-family:var(--body);background:var(--paper);color:var(--ink);font-size:16px;line-height:1.55;-webkit-font-smoothing:antialiased}
+.wrap{max-width:920px;margin:0 auto;padding:0 18px}
+a{color:var(--green)}
+:focus-visible{outline:3px solid var(--yellow);outline-offset:2px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}html{scroll-behavior:auto}}
+
+/* ---------- Header + hero ---------- */
+.masthead{background:linear-gradient(168deg,var(--green-dk) 0%,var(--green) 62%,#07854A 100%);color:#fff;padding-bottom:86px}
+.nav{display:flex;align-items:center;justify-content:space-between;padding:18px 0}
+.brand{font-family:var(--display);font-weight:700;font-size:29px;letter-spacing:.6px;text-decoration:none;display:flex;align-items:baseline}
+.brand .coe{color:var(--yellow)}
+.brand .today{color:#fff}
+.brand .tld{color:rgba(255,255,255,.55);font-size:17px;font-weight:600;margin-left:2px}
+.nav-cta{font-size:12.5px;font-weight:600;color:#fff;text-decoration:none;border:1px solid rgba(255,255,255,.35);border-radius:999px;padding:7px 15px;transition:background .15s}
+.nav-cta:hover{background:rgba(255,255,255,.12)}
+.hero{padding-top:30px;text-align:left}
+.eyebrow{font-family:var(--display);font-weight:600;text-transform:uppercase;letter-spacing:2.2px;font-size:13.5px;color:var(--yellow)}
+h1{font-family:var(--display);font-weight:700;font-size:clamp(40px,7.5vw,62px);line-height:.98;margin:8px 0 12px;color:#fff}
+.hero-sub{display:flex;flex-wrap:wrap;gap:10px 18px;align-items:center;color:rgba(255,255,255,.85);font-size:14px}
+.livechip{display:inline-flex;align-items:center;gap:7px;background:rgba(0,0,0,.22);border:1px solid rgba(255,255,255,.18);border-radius:999px;padding:6px 14px;font-size:13px}
+.pulse{width:8px;height:8px;border-radius:50%;background:var(--yellow);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(255,209,0,.5)}55%{box-shadow:0 0 0 7px rgba(255,209,0,0)}}
+.livechip b{font-family:var(--mono);font-weight:600}
+
+/* ---------- Results board (signature) ---------- */
+.board-lift{margin-top:-66px}
+.board{background:var(--board);border-radius:18px;box-shadow:var(--shadow);overflow:hidden}
+.board-head{display:grid;grid-template-columns:minmax(0,1fr) 96px 168px;gap:14px;padding:13px 22px 11px;border-bottom:1px solid var(--line);
+  font-family:var(--display);font-weight:600;font-size:12.5px;letter-spacing:1.6px;text-transform:uppercase;color:var(--muted)}
+.board-head span:nth-child(2){text-align:center}
+.board-head span:last-child{text-align:right}
+.row{display:grid;grid-template-columns:minmax(0,1fr) 96px 168px;gap:14px;align-items:center;padding:15px 22px;border-bottom:1px solid var(--line);transition:background .15s}
+.row:last-child{border-bottom:none}
+.row:hover{background:#FAFCFA}
+.cat-cell{display:flex;align-items:center;gap:13px;min-width:0}
+.cat{flex:0 0 46px;height:46px;border-radius:11px;background:var(--green);color:#fff;font-family:var(--display);font-weight:700;font-size:26px;display:flex;align-items:center;justify-content:center;box-shadow:inset 0 -3px 0 rgba(0,0,0,.18)}
+.cat.d{background:#1F4E79}
+.cname{font-weight:600;font-size:15px}
+.cdesc{color:var(--muted);font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.spark{display:block}
+.pwrap{text-align:right}
+.premium{font-family:var(--mono);font-weight:700;font-size:clamp(18px,4.2vw,24px);font-variant-numeric:tabular-nums;letter-spacing:-.3px}
+.delta{display:inline-block;margin-top:4px;font-size:12px;font-weight:600;border-radius:999px;padding:2.5px 10px}
+.delta.up{color:var(--up);background:var(--up-bg)}
+.delta.down{color:var(--down);background:var(--down-bg)}
+.delta.flat{color:var(--muted);background:var(--paper)}
+.quota{color:var(--muted);font-size:11px;margin-top:3px}
+.board-foot{padding:11px 22px;background:#FBFCFB;border-top:1px solid var(--line);color:var(--muted);font-size:12.5px;display:flex;justify-content:space-between;flex-wrap:wrap;gap:6px}
+
+/* ---------- Sections ---------- */
+section{padding:34px 0 2px}
+h2{font-family:var(--display);font-weight:700;font-size:30px;letter-spacing:.2px;margin-bottom:4px}
+.sec-sub{color:var(--muted);font-size:14px;margin-bottom:14px}
+.card{background:var(--board);border:1px solid var(--line);border-radius:16px;padding:20px}
+
+/* ---------- Ads ---------- */
+.ad{border:1.5px dashed #CBD6CE;border-radius:14px;background:linear-gradient(180deg,#FDFEFD,#F7FAF7);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;margin:26px 0;padding:14px}
+.ad .ad-tag{font-family:var(--display);font-weight:600;letter-spacing:2px;font-size:12.5px;color:#93A198;text-transform:uppercase}
+.ad .ad-size{font-size:11px;color:#A8B4AC;margin-top:3px}
+.ad .ad-mail{font-size:11.5px;color:#8A978F;margin-top:6px}
+.ad .ad-mail a{color:var(--green);font-weight:600}
+.ad.leaderboard{min-height:104px}
+.ad.rect{min-height:252px;max-width:340px;margin-left:auto;margin-right:auto}
+
+/* ---------- Chart ---------- */
+.tabs{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:14px}
+.tabs button{font-family:var(--display);font-weight:600;font-size:16.5px;letter-spacing:.4px;padding:6px 17px;border-radius:999px;border:1.5px solid var(--line);background:#fff;color:var(--ink);cursor:pointer;transition:all .15s}
+.tabs button:hover{border-color:var(--green)}
+.tabs button[aria-pressed="true"]{background:var(--green);border-color:var(--green);color:#fff}
+#chart{width:100%;height:auto;display:block}
+.chart-note{color:var(--muted);font-size:12.5px;margin-top:10px}
+
+/* ---------- PQP ---------- */
+.pqp-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px}
+.pqp-cell{background:var(--paper);border-radius:12px;border-top:3px solid var(--green);padding:14px;text-align:center}
+.pqp-cell b{font-family:var(--mono);font-weight:700;font-size:19px;display:block;margin-top:3px;font-variant-numeric:tabular-nums}
+.pqp-cell span{font-family:var(--display);font-weight:600;font-size:14px;letter-spacing:.6px;text-transform:uppercase;color:var(--muted)}
+
+/* ---------- FAQ ---------- */
+details{border-bottom:1px solid var(--line);padding:13px 0}
+details:last-child{border-bottom:none}
+summary{font-weight:600;cursor:pointer;font-size:15px;list-style:none;display:flex;justify-content:space-between;align-items:center}
+summary::after{content:"+";font-family:var(--display);font-size:22px;color:var(--green);transition:transform .2s}
+details[open] summary::after{transform:rotate(45deg)}
+details p{color:var(--muted);font-size:14px;margin-top:9px;max-width:64ch}
+
+/* ---------- Support + footer ---------- */
+.support{margin:34px 0 0;background:#EAF2EC;border:1px solid #D4E4D9;border-radius:14px;padding:15px 20px;font-size:13.5px;color:#31473A;text-align:center}
+.support a{font-weight:600}
+footer{margin-top:26px;background:var(--ink);color:#AEBBB3;font-size:13px}
+footer .wrap{padding:30px 18px 38px}
+footer a{color:#fff}
+.advertise{background:var(--green-deep);color:#fff;border-radius:14px;padding:19px 20px;margin-bottom:22px;display:flex;flex-wrap:wrap;gap:8px 20px;align-items:center;justify-content:space-between}
+.advertise b{font-family:var(--display);font-size:21px;letter-spacing:.4px;display:block}
+.advertise span{font-size:13px;color:rgba(255,255,255,.8)}
+.advertise a{background:var(--yellow);color:var(--ink);text-decoration:none;font-weight:600;font-size:13px;border-radius:999px;padding:9px 18px;white-space:nowrap}
+.foot-brand{font-family:var(--display);font-weight:700;font-size:22px;color:#fff}
+.foot-brand .coe{color:var(--yellow)}
+
+@media (max-width:600px){
+  .masthead{padding-bottom:74px}
+  .board-head{display:none}
+  .row{grid-template-columns:minmax(0,1fr) 150px;padding:13px 14px}
+  .spark-cell{display:none}
+  .cat{flex-basis:40px;height:40px;font-size:22px;border-radius:9px}
+  .cdesc{font-size:11.5px}
+}
+</style>
+</head>
+<body>
+
+<div class="masthead">
+  <div class="wrap">
+    <div class="nav">
+      <a class="brand" href="/"><span class="coe">COE</span><span class="today">TODAY</span><span class="tld">.SG</span></a>
+      <a class="nav-cta" href="#advertise">Advertise</a>
+    </div>
+    <div class="hero">
+      <div class="eyebrow">Singapore COE bidding results</div>
+      <h1>COE Prices Today</h1>
+      <div class="hero-sub">
+        <span class="livechip"><span class="pulse" aria-hidden="true"></span>Next close&nbsp;<b id="cd-timer">—</b></span>
+        <span id="asof">Loading latest results…</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<main class="wrap">
+  <!-- RESULTS BOARD -->
+  <div class="board-lift">
+    <div class="board" aria-live="polite">
+      <div class="board-head"><span>Category</span><span>Trend</span><span>Premium</span></div>
+      <div id="board-rows"></div>
+      <div class="board-foot">
+        <span id="foot-updated">Source: LTA via data.gov.sg</span>
+        <span>Updates within minutes of every bidding close</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- AD SLOT 1 -->
+  <div class="ad leaderboard" id="ad-slot-1">
+    <span class="ad-tag">Advertising space</span>
+    <span class="ad-size">Leaderboard · 728×90 desktop · 320×100 mobile · first screen on bidding day</span>
+    <span class="ad-mail">To place your brand here, email <a href="mailto:bigcarrotlah@gmail.com">bigcarrotlah@gmail.com</a></span>
+  </div>
+
+  <!-- TREND CHART -->
+  <section id="trends">
+    <h2>COE Price Trend</h2>
+    <div class="sec-sub">Premiums at close of each bidding exercise.</div>
+    <div class="card">
+      <div class="tabs" id="cat-tabs" role="group" aria-label="Choose COE category">
+        <button aria-pressed="true" data-cat="A">Cat A</button>
+        <button aria-pressed="false" data-cat="B">Cat B</button>
+        <button aria-pressed="false" data-cat="C">Cat C</button>
+        <button aria-pressed="false" data-cat="D">Cat D</button>
+        <button aria-pressed="false" data-cat="E">Cat E</button>
+      </div>
+      <svg id="chart" viewBox="0 0 720 300" role="img" aria-label="COE price history chart">
+        <defs><linearGradient id="areafill" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#046A38" stop-opacity=".22"/>
+          <stop offset="100%" stop-color="#046A38" stop-opacity="0"/>
+        </linearGradient></defs>
+        <g id="chart-g"></g>
+      </svg>
+      <div class="chart-note">Source: LTA COE bidding results via data.gov.sg. Updated after every bidding exercise.</div>
+    </div>
+  </section>
+
+  <!-- PQP -->
+  <section id="pqp">
+    <h2>PQP This Month <span style="font-size:19px;color:var(--muted)">(COE renewal)</span></h2>
+    <div class="sec-sub">The Prevailing Quota Premium — a 3-month moving average — is what you pay to <b>renew</b> an existing COE for 5 or 10 years instead of bidding.</div>
+    <div class="card"><div class="pqp-grid" id="pqp-grid"></div></div>
+  </section>
+
+  <!-- AD SLOT 2 -->
+  <div class="ad rect" id="ad-slot-2">
+    <span class="ad-tag">Advertising space</span>
+    <span class="ad-size">Medium rectangle · 300×250 / 336×280 · mid-content</span>
+    <span class="ad-mail">Email <a href="mailto:bigcarrotlah@gmail.com">bigcarrotlah@gmail.com</a></span>
+  </div>
+
+  <!-- FAQ -->
+  <section id="faq">
+    <h2>COE Questions, Answered</h2>
+    <div class="card">
+      <details open>
+        <summary>When are COE bidding results released?</summary>
+        <p>COE open bidding runs twice a month and usually closes on the first and third Wednesday at 4:00pm Singapore time. LTA publishes results shortly after the close — this page updates within minutes.</p>
+      </details>
+      <details>
+        <summary>What do the COE categories mean?</summary>
+        <p>Cat A: cars up to 1,600cc and 130bhp (incl. mass-market EVs). Cat B: larger or more powerful cars. Cat C: goods vehicles and buses. Cat D: motorcycles. Cat E: Open category — usable for any vehicle except motorcycles, in practice mostly big cars.</p>
+      </details>
+      <details>
+        <summary>What is PQP and who needs it?</summary>
+        <p>The Prevailing Quota Premium is the 3-month moving average of COE prices for a category. If your car or bike is nearing the end of its 10-year COE, PQP is the price to renew for another 5 or 10 years without bidding.</p>
+      </details>
+      <details>
+        <summary>Why do COE prices swing so much?</summary>
+        <p>Supply is capped by the Vehicle Quota System, so premiums react to quota changes, deregistration numbers, dealer demand and the economy. A small quota cut can move prices sharply in a single exercise.</p>
+      </details>
+      <details>
+        <summary>Is COETODAY.SG official?</summary>
+        <p>No — we're an independent tracker. All figures come from LTA's official COE bidding results published on data.gov.sg. We're not affiliated with LTA or any dealer.</p>
+      </details>
+    </div>
+  </section>
+
+  <!-- SUPPORT NOTE -->
+  <div class="support">Spotted an error or need help? For support, please email <a href="mailto:bigcarrotlah@gmail.com">bigcarrotlah@gmail.com</a>.</div>
+</main>
+
+<footer>
+  <div class="wrap">
+    <div class="advertise" id="advertise">
+      <div>
+        <b>Advertise on COETODAY.SG</b>
+        <span>Reach car buyers and COE renewal owners at the exact moment they check prices. Three fixed placements.</span>
+      </div>
+      <a href="mailto:bigcarrotlah@gmail.com">Email us</a>
+    </div>
+    <div class="foot-brand"><span class="coe">COE</span>TODAY.SG</div>
+    <p style="margin-top:8px">© 2026 COETODAY.SG · Data: LTA via data.gov.sg · Independent site, not affiliated with LTA.<br>
+    Results shown are the Quota Premium at close of each exercise. Verify with LTA before making purchase decisions.<br>
+    For support, please email <a href="mailto:bigcarrotlah@gmail.com">bigcarrotlah@gmail.com</a>.</p>
+  </div>
+</footer>
+
+<script>
+const CAT_META = {
+  A:{name:"Cat A", desc:"Cars ≤1,600cc & 130bhp"},
+  B:{name:"Cat B", desc:"Cars >1,600cc or 130bhp"},
+  C:{name:"Cat C", desc:"Goods vehicles & buses"},
+  D:{name:"Cat D", desc:"Motorcycles"},
+  E:{name:"Cat E", desc:"Open category"}
+};
+const fmt = n => n==null ? "—" : "$" + n.toLocaleString("en-SG");
+let DATA = null;
+
+fetch("/data/latest.json").then(r=>r.json()).then(d=>{ DATA=d; render(); drawChart("A"); }).catch(()=>{
+  document.getElementById("asof").textContent = "Couldn't load results. Refresh to try again.";
+});
+
+function sparkline(cat, dirClass){
+  const pts = DATA.exercises.filter(e=>e.premiums[cat]!=null).slice(-10).map(e=>e.premiums[cat]);
+  if (pts.length<2) return "";
+  const W=88,H=30,P=3;
+  const mn=Math.min(...pts), mx=Math.max(...pts), span=(mx-mn)||1;
+  const X=i=>P+i*(W-2*P)/(pts.length-1);
+  const Y=v=>H-P-(v-mn)/span*(H-2*P);
+  const d=pts.map((v,i)=>`${i?"L":"M"}${X(i).toFixed(1)},${Y(v).toFixed(1)}`).join(" ");
+  const col = dirClass==="up" ? "#C0271A" : dirClass==="down" ? "#0B7A4B" : "#93A198";
+  return `<svg class="spark" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" aria-hidden="true">
+    <path d="${d}" fill="none" stroke="${col}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+    <circle cx="${X(pts.length-1)}" cy="${Y(pts[pts.length-1])}" r="2.6" fill="${col}"/></svg>`;
+}
+
+function render(){
+  const latest = DATA.exercises[DATA.exercises.length-1];
+  const prev   = DATA.exercises[DATA.exercises.length-2] || {premiums:{}};
+  document.getElementById("asof").textContent = `Results: bidding exercise closed ${latest.label}`;
+  if (DATA.updated){
+    const u = new Date(DATA.updated);
+    document.getElementById("foot-updated").textContent =
+      `Source: LTA via data.gov.sg · Updated ${u.toLocaleDateString("en-SG",{day:"numeric",month:"short"})}`;
+  }
+  const rows = document.getElementById("board-rows");
+  rows.innerHTML = "";
+  for (const c of ["A","B","C","D","E"]){
+    const now = latest.premiums[c], was = prev.premiums ? prev.premiums[c] : null;
+    let dir="flat", chip=`<span class="delta flat">no change</span>`;
+    if (now!=null && was!=null && now!==was){
+      const diff=now-was, pct=(100*diff/was).toFixed(1);
+      dir = diff>0 ? "up" : "down";
+      chip = diff>0
+        ? `<span class="delta up">▲ ${fmt(diff)} (+${pct}%)</span>`
+        : `<span class="delta down">▼ ${fmt(-diff)} (${pct}%)</span>`;
+    }
+    const quota = latest.quota && latest.quota[c] ? `<div class="quota">Quota ${latest.quota[c].toLocaleString()}</div>` : "";
+    rows.insertAdjacentHTML("beforeend", `
+      <div class="row">
+        <div class="cat-cell">
+          <div class="cat ${c==='D'?'d':''}">${c}</div>
+          <div style="min-width:0"><div class="cname">${CAT_META[c].name}</div><div class="cdesc">${CAT_META[c].desc}</div></div>
+        </div>
+        <div class="spark-cell" style="text-align:center">${sparkline(c,dir)}</div>
+        <div class="pwrap"><div class="premium">${fmt(now)}</div>${chip}${quota}</div>
+      </div>`);
+  }
+  const pg = document.getElementById("pqp-grid");
+  pg.innerHTML = "";
+  for (const c of ["A","B","C","D"]){
+    const v = DATA.pqp ? DATA.pqp[c] : null;
+    pg.insertAdjacentHTML("beforeend",
+      `<div class="pqp-cell"><span>${CAT_META[c].name}</span><b>${fmt(v)}</b></div>`);
+  }
+}
+
+/* Countdown */
+function tickCountdown(){
+  const el = document.getElementById("cd-timer");
+  let target = DATA && DATA.next_close ? new Date(DATA.next_close) : nextBiddingClose();
+  const ms = target - new Date();
+  if (ms <= 0){ el.textContent = "results due"; return; }
+  const d=Math.floor(ms/86400000), h=Math.floor(ms/3600000)%24, m=Math.floor(ms/60000)%60;
+  el.textContent = d>0 ? `${d}d ${h}h ${m}m` : `${h}h ${m}m ${Math.floor(ms/1000)%60}s`;
+}
+function nextBiddingClose(){
+  const now = new Date();
+  for (let add=0; add<60; add++){
+    const t = new Date(now.getFullYear(), now.getMonth(), now.getDate()+add, 16, 0, 0);
+    if (t.getDay()===3){
+      const nth = Math.ceil(t.getDate()/7);
+      if ((nth===1||nth===3) && t>now) return t;
+    }
+  }
+  return now;
+}
+setInterval(tickCountdown, 1000); setTimeout(tickCountdown, 400);
+
+/* Main chart with area fill */
+function drawChart(cat){
+  const g = document.getElementById("chart-g");
+  const pts = DATA.exercises.filter(e=>e.premiums[cat]!=null)
+    .map(e=>({x:new Date(e.close_date).getTime(), y:e.premiums[cat], label:e.label}));
+  if (pts.length<2){ g.innerHTML=""; return; }
+  const W=720,H=300,P={l:64,r:16,t:18,b:34};
+  const xs=pts.map(p=>p.x), ys=pts.map(p=>p.y);
+  const x0=Math.min(...xs), x1=Math.max(...xs);
+  const yMin=Math.min(...ys)*0.96, yMax=Math.max(...ys)*1.04;
+  const X=v=>P.l+(v-x0)/(x1-x0)*(W-P.l-P.r);
+  const Y=v=>H-P.b-(v-yMin)/(yMax-yMin)*(H-P.t-P.b);
+  let s="";
+  for (let i=0;i<=4;i++){
+    const v=yMin+(yMax-yMin)*i/4, y=Y(v);
+    s+=`<line x1="${P.l}" y1="${y}" x2="${W-P.r}" y2="${y}" stroke="#E4E9E4"/>`+
+       `<text x="${P.l-9}" y="${y+4}" text-anchor="end" font-size="11" fill="#5C6963" font-family="IBM Plex Mono">$${Math.round(v/1000)}k</text>`;
+  }
+  const line = pts.map((p,i)=>`${i?"L":"M"}${X(p.x).toFixed(1)},${Y(p.y).toFixed(1)}`).join(" ");
+  const area = line + ` L${X(pts[pts.length-1].x).toFixed(1)},${H-P.b} L${X(pts[0].x).toFixed(1)},${H-P.b} Z`;
+  const last = pts[pts.length-1], first = pts[0];
+  s+=`<path d="${area}" fill="url(#areafill)"/>`;
+  s+=`<path d="${line}" fill="none" stroke="#046A38" stroke-width="2.5" stroke-linejoin="round"/>`;
+  s+=`<circle cx="${X(last.x)}" cy="${Y(last.y)}" r="4.5" fill="#046A38" stroke="#fff" stroke-width="1.5"/>`;
+  s+=`<text x="${X(last.x)-7}" y="${Y(last.y)-11}" text-anchor="end" font-size="12.5" font-weight="700" fill="#131A16" font-family="IBM Plex Mono">${fmt(last.y)}</text>`;
+  s+=`<text x="${X(first.x)}" y="${H-10}" font-size="11" fill="#5C6963">${first.label}</text>`;
+  s+=`<text x="${W-P.r}" y="${H-10}" text-anchor="end" font-size="11" fill="#5C6963">${last.label}</text>`;
+  g.innerHTML = s;
+}
+document.getElementById("cat-tabs").addEventListener("click", e=>{
+  const b = e.target.closest("button"); if(!b) return;
+  document.querySelectorAll("#cat-tabs button").forEach(x=>x.setAttribute("aria-pressed","false"));
+  b.setAttribute("aria-pressed","true");
+  drawChart(b.dataset.cat);
+});
+</script>
+</body>
+</html>

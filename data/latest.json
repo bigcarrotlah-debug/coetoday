@@ -1,0 +1,15 @@
+{
+  "_note": "SEED DATA — replaced automatically by scripts/fetch_coe.py on first pipeline run. Premiums below are real published results but the series is sparse.",
+  "updated": "2026-08-11T00:00:00+08:00",
+  "next_close": "2026-08-19T16:00:00+08:00",
+  "pqp": { "A": null, "B": null, "C": null, "D": null },
+  "exercises": [
+    { "close_date": "2025-07-09", "label": "Jul 2025 · 1st", "premiums": { "A": 101102, "B": 119600, "C": 66689, "D": 9389, "E": 118500 } },
+    { "close_date": "2025-09-17", "label": "Sep 2025 · 2nd", "premiums": { "A": 119003, "B": 136890, "C": 72501, "D": 9209, "E": 140502 } },
+    { "close_date": "2025-10-08", "label": "Oct 2025 · 1st", "premiums": { "A": 128105, "B": 141000, "C": 74301, "D": 9810, "E": 140009 } },
+    { "close_date": "2025-10-23", "label": "Oct 2025 · 2nd", "premiums": { "A": 122000, "B": 131889, "C": 76801, "D": 9389, "E": 136000 } },
+    { "close_date": "2025-11-05", "label": "Nov 2025 · 1st", "premiums": { "A": 110002, "B": 115001, "C": null, "D": null, "E": null } },
+    { "close_date": "2026-07-08", "label": "Jul 2026 · 1st", "premiums": { "A": 129000, "B": 130889, "C": 95000, "D": 10201, "E": 129801 } },
+    { "close_date": "2026-07-22", "label": "Jul 2026 · 2nd", "premiums": { "A": 126000, "B": 129890, "C": 93889, "D": 10202, "E": 129971 } }
+  ]
+}
