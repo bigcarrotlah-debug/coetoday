@@ -1,20 +1,17 @@
 #!/usr/bin/env python3
 """
-coetoday.sg data pipeline.
-Pulls the full LTA "COE Bidding Results" dataset from data.gov.sg,
-rebuilds data/latest.json (full history + PQP + next close date).
-
-IMPORTANT before first run:
-  1. Go to https://data.gov.sg and search "COE bidding results" (LTA).
-  2. Copy the dataset ID from the URL and set DATASET_ID below.
-     (Same verify-the-ID step you did for resaleshdb.)
+coetoday.sg data pipeline (v2 — fixed 403).
+Pulls the full LTA "COE Bidding Results" dataset from data.gov.sg
+via the datastore_search API, rebuilds data/latest.json
+(full history + PQP + next close date).
 """
 import json, math, urllib.request, urllib.parse
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 DATASET_ID = "d_69b3380ad7e51aff3a7dcc84eba52b8a"
-API = "https://api-production.data.gov.sg/v2/public/api/datasets/{}/poll-download"
+API = "https://data.gov.sg/api/action/datastore_search"
+HEADERS = {"User-Agent": "Mozilla/5.0 (compatible; coetoday.sg pipeline; +https://coetoday.sg)"}
 OUT = Path(__file__).resolve().parent.parent / "data" / "latest.json"
 SGT = timezone(timedelta(hours=8))
 
@@ -24,23 +21,30 @@ CAT_MAP = {
 }
 
 def fetch_rows():
-    """data.gov.sg v2: poll-download returns a signed CSV/JSON URL for the full dataset."""
-    req = urllib.request.Request(API.format(DATASET_ID), method="GET")
-    with urllib.request.urlopen(req, timeout=60) as r:
-        meta = json.load(r)
-    url = meta["data"]["url"]
-    with urllib.request.urlopen(url, timeout=120) as r:
-        raw = r.read().decode("utf-8")
-    # Dataset ships as CSV: month,bidding_no,vehicle_class,quota,bids_success,bids_received,premium
-    import csv, io
-    return list(csv.DictReader(io.StringIO(raw)))
+    """Page through datastore_search until all records are in."""
+    rows, offset, limit = [], 0, 5000
+    while True:
+        qs = urllib.parse.urlencode({"resource_id": DATASET_ID, "limit": limit, "offset": offset})
+        req = urllib.request.Request(f"{API}?{qs}", headers=HEADERS)
+        with urllib.request.urlopen(req, timeout=60) as r:
+            payload = json.load(r)
+        if not payload.get("success"):
+            raise RuntimeError(f"API returned success=false: {payload}")
+        batch = payload["result"]["records"]
+        rows.extend(batch)
+        if len(batch) < limit:
+            break
+        offset += limit
+    if not rows:
+        raise RuntimeError("API returned zero records — check DATASET_ID")
+    return rows
 
 def month_label(month_str, bidding_no):
     dt = datetime.strptime(month_str, "%Y-%m")
     return f"{dt.strftime('%b %Y')} · {'1st' if str(bidding_no)=='1' else '2nd'}"
 
 def close_date_guess(month_str, bidding_no):
-    """1st/3rd Wednesday of the month, 4pm SGT (good enough for charting)."""
+    """1st/3rd Wednesday of the month (good enough for charting)."""
     dt = datetime.strptime(month_str, "%Y-%m").replace(tzinfo=SGT)
     wednesdays = []
     d = dt
@@ -50,10 +54,10 @@ def close_date_guess(month_str, bidding_no):
         d += timedelta(days=1)
     idx = 0 if str(bidding_no) == "1" else 2
     w = wednesdays[min(idx, len(wednesdays)-1)]
-    return w.replace(hour=16).date().isoformat()
+    return w.date().isoformat()
 
 def next_close(now):
-    """Next 1st/3rd Wednesday 4pm SGT after now (LTA sometimes shifts — page also has manual override)."""
+    """Next 1st/3rd Wednesday 4pm SGT after now."""
     d = now
     for _ in range(70):
         if d.weekday() == 2:
@@ -68,7 +72,7 @@ def main():
     rows = fetch_rows()
     exercises = {}
     for row in rows:
-        cat = CAT_MAP.get(row["vehicle_class"])
+        cat = CAT_MAP.get(str(row.get("vehicle_class", "")).strip())
         if not cat:
             continue
         key = (row["month"], str(row["bidding_no"]))
@@ -77,15 +81,18 @@ def main():
             "label": month_label(*key),
             "premiums": {}, "quota": {},
         })
-        ex["premiums"][cat] = int(float(row["premium"]))
+        try:
+            ex["premiums"][cat] = int(float(row["premium"]))
+        except (KeyError, TypeError, ValueError):
+            pass
         try:
             ex["quota"][cat] = int(float(row["quota"]))
-        except (KeyError, ValueError):
+        except (KeyError, TypeError, ValueError):
             pass
 
     ordered = [exercises[k] for k in sorted(exercises, key=lambda k: (k[0], k[1]))]
 
-    # PQP = 3-month moving average of QP per category (cats A–D), rounded per LTA convention
+    # PQP = 3-month moving average of QP per category (cats A–D)
     pqp = {}
     for cat in "ABCD":
         recent = [e["premiums"][cat] for e in ordered[-6:] if cat in e["premiums"]]
