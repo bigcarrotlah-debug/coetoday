@@ -157,6 +157,11 @@ h2{font-family:var(--display);font-weight:700;font-size:30px;letter-spacing:.2px
 .pqp-cell{background:var(--paper);border-radius:12px;border-top:3px solid var(--green);padding:14px;text-align:center}
 .pqp-cell b{font-family:var(--mono);font-weight:700;font-size:19px;display:block;margin-top:3px;font-variant-numeric:tabular-nums}
 .pqp-cell span{font-family:var(--display);font-weight:600;font-size:14px;letter-spacing:.6px;text-transform:uppercase;color:var(--muted)}
+.pqp-cell .yr{display:block;font-family:var(--body);font-size:11px;font-weight:600;letter-spacing:.4px;color:var(--muted);text-transform:none;margin-top:6px}
+.pqp-cell .half{font-family:var(--mono);font-weight:600;font-size:14px;color:var(--ink);display:block}
+.pqp-period{font-size:13px;font-weight:600;color:var(--green);background:#EAF2EC;border-radius:8px;padding:7px 12px;display:inline-block;margin-bottom:14px}
+.pqp-period.est{color:#8A5A00;background:#FDF4E3}
+.pqp-note{color:var(--muted);font-size:12.5px;margin-top:12px}
 
 /* ---------- FAQ ---------- */
 details{border-bottom:1px solid var(--line);padding:13px 0}
@@ -267,9 +272,13 @@ footer a{color:#fff}
 
   <!-- PQP -->
   <section id="pqp">
-    <h2>PQP This Month <span style="font-size:19px;color:var(--muted)">(COE renewal)</span></h2>
-    <div class="sec-sub">The Prevailing Quota Premium — a 3-month moving average — is what you pay to <b>renew</b> an existing COE for 5 or 10 years instead of bidding.</div>
-    <div class="card"><div class="pqp-grid" id="pqp-grid"></div></div>
+    <h2>COE Renewal Cost <span style="font-size:19px;color:var(--muted)">(PQP)</span></h2>
+    <div class="sec-sub">If your COE is expiring, you can <b>renew</b> instead of bidding. You pay the Prevailing Quota Premium (PQP) — set monthly by LTA, fixed for that month. <b>10 years costs the full PQP; 5 years costs half.</b></div>
+    <div class="card">
+      <div id="pqp-period" class="pqp-period">Loading published rates…</div>
+      <div class="pqp-grid" id="pqp-grid"></div>
+      <p class="pqp-note" id="pqp-note"></p>
+    </div>
   </section>
 
   <!-- PAST RESULTS -->
@@ -409,13 +418,38 @@ function render(){
         <div class="pwrap"><div class="premium">${fmt(now)}</div>${chip}${quota}</div>
       </div>`);
   }
+  renderPQP();
+}
+
+function renderPQP(){
   const pg = document.getElementById("pqp-grid");
+  const periodEl = document.getElementById("pqp-period");
+  const noteEl = document.getElementById("pqp-note");
+  const official = DATA.pqp_official || {};
+  const useOfficial = Object.keys(official).length > 0;
+  const month = useOfficial ? (Object.values(official)[0].month || "") : "";
+
+  periodEl.textContent = useOfficial
+    ? `Official LTA rate — ${month}`
+    : "Estimated from the last 3 months of bidding";
+  periodEl.className = useOfficial ? "pqp-period" : "pqp-period est";
+
   pg.innerHTML = "";
   for (const c of ["A","B","C","D"]){
-    const v = DATA.pqp ? DATA.pqp[c] : null;
+    const v = useOfficial
+      ? (official[c] ? official[c].value : null)
+      : (DATA.pqp ? DATA.pqp[c] : null);
+    const half = v == null ? "—" : fmt(Math.round(v/2));
     pg.insertAdjacentHTML("beforeend",
-      `<div class="pqp-cell"><span>${CAT_META[c].name}</span><b>${fmt(v)}</b></div>`);
+      `<div class="pqp-cell"><span>${CAT_META[c].name}</span><b>${fmt(v)}</b>
+        <span class="yr">10-year renewal</span>
+        <span class="half">${half}</span>
+        <span class="yr">5-year renewal</span></div>`);
   }
+
+  noteEl.innerHTML = useOfficial
+    ? `Published by LTA for ${month} and fixed for that month. LTA publishes the official rate with a short lag, so this may trail the current month — always confirm with LTA or your dealer before paying.`
+    : `LTA has not published the official rate for this period yet, so this is our own estimate from the last three months of bidding and may differ from the figure you are charged. Confirm with LTA before renewing.`;
 }
 
 /* Countdown */
