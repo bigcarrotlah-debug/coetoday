@@ -111,6 +111,16 @@ h1{font-family:var(--display);font-weight:700;font-size:clamp(40px,7.5vw,62px);l
 .delta.flat{color:var(--muted);background:var(--paper)}
 .quota{color:var(--muted);font-size:11px;margin-top:3px}
 .board-foot{padding:11px 22px;background:#FBFCFB;border-top:1px solid var(--line);color:var(--muted);font-size:12.5px;display:flex;justify-content:space-between;flex-wrap:wrap;gap:6px}
+.board-foot a{color:var(--green);font-weight:600}
+.status{display:inline-flex;align-items:center;gap:7px}
+.status-dot{width:8px;height:8px;border-radius:50%;background:#0B7A4B;flex:0 0 8px}
+.status-dot.live{background:#C0271A;animation:livepulse 1.6s infinite}
+@keyframes livepulse{0%,100%{box-shadow:0 0 0 0 rgba(192,39,26,.55)}60%{box-shadow:0 0 0 7px rgba(192,39,26,0)}}
+.trust-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:14px}
+.trust-item h3{font-family:var(--display);font-weight:600;font-size:17px;letter-spacing:.3px;margin-bottom:4px}
+.trust-item p{color:var(--muted);font-size:13.5px}
+.verify{margin-top:14px;padding-top:14px;border-top:1px solid var(--line);font-size:13px;color:var(--muted)}
+.verify a{font-weight:600}
 
 /* ---------- Sections ---------- */
 section{padding:34px 0 2px}
@@ -220,8 +230,11 @@ footer a{color:#fff}
       <div class="board-head"><span>Category</span><span>Trend</span><span>Premium</span></div>
       <div id="board-rows"><!--ROWS_START--><!--ROWS_END--></div>
       <div class="board-foot">
-        <span id="foot-updated">Source: LTA via data.gov.sg</span>
-        <span>Updates within minutes of every bidding close</span>
+        <span class="status" id="status-line">
+          <span class="status-dot" id="status-dot" aria-hidden="true"></span>
+          <span id="status-text">Checking for updates…</span>
+        </span>
+        <span>Source: <a href="https://data.gov.sg/datasets/d_69b3380ad7e51aff3a7dcc84eba52b8a/view" target="_blank" rel="noopener">LTA via data.gov.sg</a></span>
       </div>
     </div>
   </div>
@@ -333,6 +346,36 @@ footer a{color:#fff}
     </div>
   </section>
 
+  <!-- HOW THIS WORKS / TRUST -->
+  <section id="how-it-works">
+    <h2>How This Site Works</h2>
+    <div class="sec-sub">No opinions, no estimates where official numbers exist — just LTA's published figures, fetched automatically.</div>
+    <div class="card">
+      <div class="trust-grid">
+        <div class="trust-item">
+          <h3>Straight from LTA</h3>
+          <p>Every premium and quota figure comes from the Land Transport Authority's official COE bidding results, published on data.gov.sg. Nothing is typed in by hand.</p>
+        </div>
+        <div class="trust-item">
+          <h3>Checked automatically</h3>
+          <p>An automated job checks for new results every night, and every ten minutes on bidding afternoons. When LTA publishes, this page updates within minutes.</p>
+        </div>
+        <div class="trust-item">
+          <h3>Renewal rates are official</h3>
+          <p>PQP figures are LTA's published monthly rates, labelled with the month they apply to. If a month isn't published yet, we say so rather than guessing quietly.</p>
+        </div>
+        <div class="trust-item">
+          <h3>Independent, free, no login</h3>
+          <p>Not affiliated with LTA, any dealer or any loan company. No account needed, no data collected from you, no paywall.</p>
+        </div>
+      </div>
+      <p class="verify">Want to check us? Every figure on this page can be verified against the
+        <a href="https://data.gov.sg/datasets/d_69b3380ad7e51aff3a7dcc84eba52b8a/view" target="_blank" rel="noopener">LTA COE bidding results dataset</a>
+        and the <a href="https://data.gov.sg/datasets/d_22094bf608253d36c0c63b52d852dd6e/view" target="_blank" rel="noopener">official PQP series</a>.
+        Spot something wrong? Email <a href="mailto:bigcarrotlah@gmail.com">bigcarrotlah@gmail.com</a> and we'll correct it.</p>
+    </div>
+  </section>
+
   <!-- SUPPORT NOTE -->
   <div class="support">Spotted an error or need help? For support, please email <a href="mailto:bigcarrotlah@gmail.com">bigcarrotlah@gmail.com</a>.</div>
 </main>
@@ -390,11 +433,7 @@ function render(){
   const cd = new Date(latest.close_date);
   const dstr = cd.toLocaleDateString("en-SG",{weekday:"short",day:"numeric",month:"short",year:"numeric"});
   document.getElementById("asof").textContent = `Latest results \u2014 bidding closed ${dstr}`;
-  if (DATA.updated){
-    const u = new Date(DATA.updated);
-    document.getElementById("foot-updated").textContent =
-      `Source: LTA via data.gov.sg · Updated ${u.toLocaleDateString("en-SG",{day:"numeric",month:"short"})}`;
-  }
+  updateStatus();
   const rows = document.getElementById("board-rows");
   rows.innerHTML = "";
   for (const c of ["A","B","C","D","E"]){
@@ -505,6 +544,58 @@ function drawChart(){
   s+=`<text x="${W-P.r}" y="${H-10}" text-anchor="end" font-size="11" fill="#5C6963">${last.label}</text>`;
   g.innerHTML = s;
 }
+/* ---- Live status line + bidding-day auto-refresh ---- */
+function sgNow(){
+  return new Date(new Date().toLocaleString("en-US",{timeZone:"Asia/Singapore"}));
+}
+function inBiddingWindow(){
+  const n = sgNow();
+  const mins = n.getHours()*60 + n.getMinutes();
+  return n.getDay()===3 && mins >= 15*60+45 && mins <= 19*60;   // Wed 15:45-19:00 SGT
+}
+function ago(ms){
+  const s = Math.floor(ms/1000);
+  if (s < 90) return "just now";
+  const m = Math.floor(s/60);
+  if (m < 60) return `${m} min ago`;
+  const h = Math.floor(m/60);
+  if (h < 24) return `${h} hr ago`;
+  const d = Math.floor(h/24);
+  return d === 1 ? "yesterday" : `${d} days ago`;
+}
+function updateStatus(){
+  const dot = document.getElementById("status-dot");
+  const txt = document.getElementById("status-text");
+  if (!DATA || !DATA.updated) return;
+  const checked = new Date(DATA.updated);
+  if (inBiddingWindow()){
+    dot.className = "status-dot live";
+    txt.textContent = `Bidding day — watching for results · last checked ${ago(Date.now()-checked)}`;
+  } else {
+    dot.className = "status-dot";
+    txt.textContent = `Up to date · last checked ${ago(Date.now()-checked)}`;
+  }
+}
+setInterval(updateStatus, 30000);
+
+/* On bidding afternoons, pull fresh data without the user refreshing. */
+async function poll(){
+  if (!inBiddingWindow()) return;
+  try {
+    const r = await fetch("/data/latest.json?t=" + Date.now(), {cache:"no-store"});
+    const d = await r.json();
+    const newest = d.exercises[d.exercises.length-1];
+    const current = DATA.exercises[DATA.exercises.length-1];
+    DATA = d;
+    if (newest.close_date !== current.close_date || newest.premiums.A !== current.premiums.A){
+      render(); drawChart(); initHistory();
+    } else {
+      updateStatus();
+    }
+  } catch(e) { /* offline or mid-deploy; try again next tick */ }
+}
+setInterval(poll, 60000);
+
 document.getElementById("cat-tabs").addEventListener("click", e=>{
   const b = e.target.closest("button"); if(!b) return;
   document.querySelectorAll("#cat-tabs button").forEach(x=>x.setAttribute("aria-pressed","false"));
