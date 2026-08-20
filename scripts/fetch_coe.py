@@ -112,9 +112,71 @@ def render_page(ordered, pqp):
                   "<!--ROWS_START-->" + "".join(rows_html) + "<!--ROWS_END-->",
                   html, flags=re.S)
 
+    # --- readable close date ---
+    cd = datetime.fromisoformat(latest["close_date"])
+    date_long = cd.strftime("%a %-d %b %Y")   # Wed 19 Aug 2026
+    date_short = cd.strftime("%-d %b %Y")
+
     # --- as-of line ---
     html = re.sub(r"<!--ASOF_START-->.*?<!--ASOF_END-->",
-                  f'<!--ASOF_START-->Results: bidding exercise closed {latest["label"]}<!--ASOF_END-->',
+                  f'<!--ASOF_START-->Latest results &mdash; bidding closed {date_long}<!--ASOF_END-->',
+                  html, flags=re.S)
+
+    # --- dated title ---
+    html = re.sub(r"<!--TITLE_START-->.*?<!--TITLE_END-->",
+                  f'<!--TITLE_START--><title>COE Prices Today ({date_short}) '
+                  f'&mdash; Latest Bidding Results &amp; Trends | COETODAY.SG</title><!--TITLE_END-->',
+                  html, flags=re.S)
+
+    # --- auto-written summary prose (real content for crawlers and humans) ---
+    def move(c):
+        now, was = latest["premiums"].get(c), prev["premiums"].get(c)
+        if now is None:
+            return None
+        if was is None or now == was:
+            return f"Cat {c} was unchanged at {money(now)}"
+        d = now - was
+        verb = "rose" if d > 0 else "fell"
+        return f"Cat {c} {verb} {money(abs(d))} ({100*d/was:+.1f}%) to {money(now)}"
+
+    parts = [m for m in (move(c) for c in "ABCDE") if m]
+    ups = sum(1 for c in "ABCDE"
+              if latest["premiums"].get(c) is not None
+              and prev["premiums"].get(c) is not None
+              and latest["premiums"][c] > prev["premiums"][c])
+    mood = ("Premiums rose across most categories." if ups >= 3
+            else "Premiums eased across most categories." if ups <= 1
+            else "Premiums were mixed across the categories.")
+
+    pqp_bits = ", ".join(f"Cat {c} {money(pqp[c])}" for c in "ABCD" if pqp.get(c))
+    summary = (
+        f'<p><strong>COE results for {latest["label"]} (bidding closed {date_long}).</strong> '
+        f'{mood} ' + "; ".join(parts) + '. '
+        f'Figures are the Quota Premium at the close of the exercise, published by LTA.</p>'
+        f'<p style="margin-top:10px">For owners renewing instead of bidding, the current Prevailing '
+        f'Quota Premium (PQP) &mdash; the three-month moving average used for COE renewal &mdash; '
+        f'stands at {pqp_bits}. The next bidding exercise opens in the following round; '
+        f'this page updates within minutes of each close.</p>'
+    )
+    html = re.sub(r"<!--SUMMARY_START-->.*?<!--SUMMARY_END-->",
+                  "<!--SUMMARY_START-->" + summary + "<!--SUMMARY_END-->",
+                  html, flags=re.S)
+
+    # --- JSON-LD freshness signal ---
+    ld = {
+        "@context": "https://schema.org",
+        "@type": "WebPage",
+        "name": f"COE Prices Today ({date_short})",
+        "url": "https://coetoday.sg/",
+        "datePublished": latest["close_date"],
+        "dateModified": datetime.now(SGT).date().isoformat(),
+        "inLanguage": "en-SG",
+        "isAccessibleForFree": True,
+        "creator": {"@type": "Organization", "name": "COETODAY.SG"},
+    }
+    html = re.sub(r"<!--LD_START-->.*?<!--LD_END-->",
+                  '<!--LD_START--><script type="application/ld+json">'
+                  + json.dumps(ld, ensure_ascii=False) + '</script><!--LD_END-->',
                   html, flags=re.S)
 
     # --- meta description with live numbers ---
