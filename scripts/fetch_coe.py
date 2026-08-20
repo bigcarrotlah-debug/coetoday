@@ -1,27 +1,36 @@
 #!/usr/bin/env python3
 """
-coetoday.sg data pipeline (v2 — fixed 403).
-Pulls the full LTA "COE Bidding Results" dataset from data.gov.sg
-via the datastore_search API, rebuilds data/latest.json
-(full history + PQP + next close date).
+coetoday.sg data pipeline (v3).
+1. Pulls the full LTA "COE Bidding Results" dataset from data.gov.sg.
+2. Rebuilds data/latest.json (full history + PQP + next close date).
+3. Pre-renders the latest premiums into index.html so crawlers that don't
+   run JavaScript still see real prices in the raw HTML.
 """
-import json, math, urllib.request, urllib.parse
+import json, math, re, urllib.request, urllib.parse
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 DATASET_ID = "d_69b3380ad7e51aff3a7dcc84eba52b8a"
 API = "https://data.gov.sg/api/action/datastore_search"
 HEADERS = {"User-Agent": "Mozilla/5.0 (compatible; coetoday.sg pipeline; +https://coetoday.sg)"}
-OUT = Path(__file__).resolve().parent.parent / "data" / "latest.json"
+ROOT = Path(__file__).resolve().parent.parent
+OUT = ROOT / "data" / "latest.json"
+PAGE = ROOT / "index.html"
 SGT = timezone(timedelta(hours=8))
 
 CAT_MAP = {
     "Category A": "A", "Category B": "B", "Category C": "C",
     "Category D": "D", "Category E": "E",
 }
+CAT_DESC = {
+    "A": "Cars &le;1,600cc &amp; 130bhp",
+    "B": "Cars &gt;1,600cc or 130bhp",
+    "C": "Goods vehicles &amp; buses",
+    "D": "Motorcycles",
+    "E": "Open category",
+}
 
 def fetch_rows():
-    """Page through datastore_search until all records are in."""
     rows, offset, limit = [], 0, 5000
     while True:
         qs = urllib.parse.urlencode({"resource_id": DATASET_ID, "limit": limit, "offset": offset})
@@ -36,28 +45,24 @@ def fetch_rows():
             break
         offset += limit
     if not rows:
-        raise RuntimeError("API returned zero records — check DATASET_ID")
+        raise RuntimeError("API returned zero records - check DATASET_ID")
     return rows
 
 def month_label(month_str, bidding_no):
     dt = datetime.strptime(month_str, "%Y-%m")
-    return f"{dt.strftime('%b %Y')} · {'1st' if str(bidding_no)=='1' else '2nd'}"
+    return f"{dt.strftime('%b %Y')} \u00b7 {'1st' if str(bidding_no)=='1' else '2nd'}"
 
 def close_date_guess(month_str, bidding_no):
-    """1st/3rd Wednesday of the month (good enough for charting)."""
     dt = datetime.strptime(month_str, "%Y-%m").replace(tzinfo=SGT)
-    wednesdays = []
-    d = dt
+    wednesdays, d = [], dt
     while d.month == dt.month:
         if d.weekday() == 2:
             wednesdays.append(d)
         d += timedelta(days=1)
     idx = 0 if str(bidding_no) == "1" else 2
-    w = wednesdays[min(idx, len(wednesdays)-1)]
-    return w.date().isoformat()
+    return wednesdays[min(idx, len(wednesdays)-1)].date().isoformat()
 
 def next_close(now):
-    """Next 1st/3rd Wednesday 4pm SGT after now."""
     d = now
     for _ in range(70):
         if d.weekday() == 2:
@@ -67,6 +72,63 @@ def next_close(now):
                 return candidate.isoformat()
         d += timedelta(days=1)
     return None
+
+def money(n):
+    return "&mdash;" if n is None else "$" + f"{n:,}"
+
+def render_page(ordered, pqp):
+    """Bake the latest results into index.html between the marker comments."""
+    if not PAGE.exists():
+        print("index.html not found - skipping pre-render")
+        return
+    html = PAGE.read_text()
+    latest = ordered[-1]
+    prev = ordered[-2] if len(ordered) > 1 else {"premiums": {}}
+
+    # --- board rows ---
+    rows_html = []
+    for c in "ABCDE":
+        now, was = latest["premiums"].get(c), prev["premiums"].get(c)
+        chip = '<span class="delta flat">no change</span>'
+        if now is not None and was is not None and now != was:
+            diff = now - was
+            pct = f"{100*diff/was:+.1f}"
+            if diff > 0:
+                chip = f'<span class="delta up">&#9650; {money(diff)} ({pct}%)</span>'
+            else:
+                chip = f'<span class="delta down">&#9660; {money(-diff)} ({pct}%)</span>'
+        quota = ""
+        if latest.get("quota", {}).get(c):
+            quota = f'<div class="quota">Quota {latest["quota"][c]:,}</div>'
+        rows_html.append(
+            f'<div class="row"><div class="cat-cell">'
+            f'<div class="cat {"d" if c=="D" else ""}">{c}</div>'
+            f'<div style="min-width:0"><div class="cname">Cat {c}</div>'
+            f'<div class="cdesc">{CAT_DESC[c]}</div></div></div>'
+            f'<div class="spark-cell" style="text-align:center"></div>'
+            f'<div class="pwrap"><div class="premium">{money(now)}</div>{chip}{quota}</div></div>'
+        )
+    html = re.sub(r"<!--ROWS_START-->.*?<!--ROWS_END-->",
+                  "<!--ROWS_START-->" + "".join(rows_html) + "<!--ROWS_END-->",
+                  html, flags=re.S)
+
+    # --- as-of line ---
+    html = re.sub(r"<!--ASOF_START-->.*?<!--ASOF_END-->",
+                  f'<!--ASOF_START-->Results: bidding exercise closed {latest["label"]}<!--ASOF_END-->',
+                  html, flags=re.S)
+
+    # --- meta description with live numbers ---
+    a, b = latest["premiums"].get("A"), latest["premiums"].get("B")
+    desc = (f'Singapore COE results for {latest["label"]}: '
+            f'Cat A {money(a)}, Cat B {money(b)}. '
+            f'All five categories, price trends, PQP for COE renewal and the next bidding countdown.')
+    desc = desc.replace("&mdash;", "n/a").replace("&amp;", "and")
+    html = re.sub(r"<!--DESC_START-->.*?<!--DESC_END-->",
+                  f'<!--DESC_START--><meta name="description" content="{desc}"><!--DESC_END-->',
+                  html, flags=re.S)
+
+    PAGE.write_text(html)
+    print(f"Pre-rendered index.html for {latest['label']}")
 
 def main():
     rows = fetch_rows()
@@ -92,21 +154,21 @@ def main():
 
     ordered = [exercises[k] for k in sorted(exercises, key=lambda k: (k[0], k[1]))]
 
-    # PQP = 3-month moving average of QP per category (cats A–D)
     pqp = {}
     for cat in "ABCD":
         recent = [e["premiums"][cat] for e in ordered[-6:] if cat in e["premiums"]]
         pqp[cat] = round(sum(recent) / len(recent)) if recent else None
 
     now = datetime.now(SGT)
-    out = {
+    OUT.write_text(json.dumps({
         "updated": now.isoformat(timespec="seconds"),
         "next_close": next_close(now),
         "pqp": pqp,
         "exercises": ordered,
-    }
-    OUT.write_text(json.dumps(out, ensure_ascii=False, indent=1))
-    print(f"Wrote {OUT} — {len(ordered)} exercises, latest: {ordered[-1]['label']}")
+    }, ensure_ascii=False, indent=1))
+    print(f"Wrote {OUT} - {len(ordered)} exercises, latest: {ordered[-1]['label']}")
+
+    render_page(ordered, pqp)
 
 if __name__ == "__main__":
     main()
