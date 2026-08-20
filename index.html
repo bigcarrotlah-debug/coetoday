@@ -87,6 +87,42 @@ h1{font-family:var(--display);font-weight:700;font-size:clamp(40px,7.5vw,62px);l
 @keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(255,209,0,.5)}55%{box-shadow:0 0 0 7px rgba(255,209,0,0)}}
 .livechip b{font-family:var(--mono);font-weight:600}
 
+/* Trust bar */
+.trustbar{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}
+.tb{display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.22);
+  color:#fff;font-size:12px;font-weight:600;border-radius:999px;padding:6px 13px;backdrop-filter:blur(2px)}
+.tb .tick{color:var(--yellow);font-weight:700}
+
+/* Headline number */
+.headline{margin-top:22px;display:flex;align-items:flex-end;gap:18px;flex-wrap:wrap}
+.headline .hl-label{font-family:var(--display);font-weight:600;text-transform:uppercase;letter-spacing:1.6px;
+  font-size:13px;color:rgba(255,255,255,.72);display:block;margin-bottom:2px}
+.headline .hl-num{font-family:var(--mono);font-weight:700;font-size:clamp(44px,11vw,76px);line-height:1;color:#fff;
+  font-variant-numeric:tabular-nums;letter-spacing:-2px;text-shadow:0 6px 26px rgba(0,0,0,.25)}
+.headline .hl-side{padding-bottom:8px}
+.hl-chip{display:inline-block;font-size:13.5px;font-weight:700;border-radius:999px;padding:5px 13px;background:rgba(0,0,0,.25);border:1px solid rgba(255,255,255,.2)}
+.hl-chip.up{color:#FFC9C2}
+.hl-chip.down{color:#B6F0D2}
+.hl-sub{display:block;font-size:12.5px;color:rgba(255,255,255,.7);margin-top:7px}
+
+/* Scanner sweep */
+.scanner{position:relative;height:3px;border-radius:3px;background:rgba(255,255,255,.16);overflow:hidden;margin-top:18px;max-width:520px}
+.scanner::after{content:"";position:absolute;inset:0;width:38%;border-radius:3px;
+  background:linear-gradient(90deg,transparent,var(--yellow),transparent);
+  animation:sweep 2.1s cubic-bezier(.6,0,.4,1) infinite}
+@keyframes sweep{0%{transform:translateX(-110%)}100%{transform:translateX(310%)}}
+.scanner.idle::after{animation-duration:6.5s;opacity:.45}
+
+/* Row flash when a number changes */
+@keyframes flashrow{0%{background:#FFF7D6}100%{background:transparent}}
+.row.changed{animation:flashrow 2.2s ease-out}
+
+@media (max-width:600px){
+  .headline{gap:12px}
+  .headline .hl-side{padding-bottom:2px}
+  .trustbar .tb{font-size:11px;padding:5px 10px}
+}
+
 /* ---------- Results board (signature) ---------- */
 .board-lift{margin-top:-66px}
 .board{background:var(--board);border-radius:18px;box-shadow:var(--shadow);overflow:hidden}
@@ -218,6 +254,26 @@ footer a{color:#fff}
       <div class="hero-sub">
         <span class="livechip"><span class="pulse" aria-hidden="true"></span>Next close&nbsp;<b id="cd-timer">—</b></span>
         <span id="asof"><!--ASOF_START-->Loading latest results…<!--ASOF_END--></span>
+      </div>
+
+      <div class="headline">
+        <div>
+          <span class="hl-label">Cat A &middot; latest premium</span>
+          <span class="hl-num" id="hl-num">$0</span>
+        </div>
+        <div class="hl-side">
+          <span class="hl-chip" id="hl-chip">&mdash;</span>
+          <span class="hl-sub" id="hl-sub">Cars up to 1,600cc &amp; 130bhp</span>
+        </div>
+      </div>
+
+      <div class="scanner idle" id="scanner" aria-hidden="true"></div>
+
+      <div class="trustbar">
+        <span class="tb"><span class="tick">&#10003;</span> Official LTA data</span>
+        <span class="tb"><span class="tick">&#10003;</span> Updates minutes after each close</span>
+        <span class="tb"><span class="tick">&#10003;</span> Independent &amp; free</span>
+        <span class="tb"><span class="tick">&#10003;</span> No login, no tracking wall</span>
       </div>
     </div>
   </div>
@@ -427,6 +483,20 @@ function sparkline(cat, dirClass){
     <circle cx="${X(pts.length-1)}" cy="${Y(pts[pts.length-1])}" r="2.6" fill="${col}"/></svg>`;
 }
 
+let LAST_SHOWN = {};
+
+function countUp(el, target){
+  if (target == null){ el.textContent = "—"; return; }
+  const dur = 900, t0 = performance.now(), from = 0;
+  function step(t){
+    const p = Math.min(1, (t - t0) / dur);
+    const eased = 1 - Math.pow(1 - p, 3);
+    el.textContent = "$" + Math.round(from + (target - from) * eased).toLocaleString("en-SG");
+    if (p < 1) requestAnimationFrame(step);
+  }
+  requestAnimationFrame(step);
+}
+
 function render(){
   const latest = DATA.exercises[DATA.exercises.length-1];
   const prev   = DATA.exercises[DATA.exercises.length-2] || {premiums:{}};
@@ -434,6 +504,19 @@ function render(){
   const dstr = cd.toLocaleDateString("en-SG",{weekday:"short",day:"numeric",month:"short",year:"numeric"});
   document.getElementById("asof").textContent = `Latest results \u2014 bidding closed ${dstr}`;
   updateStatus();
+  // --- hero headline (Cat A) ---
+  const hlNow = latest.premiums.A, hlWas = prev.premiums ? prev.premiums.A : null;
+  countUp(document.getElementById("hl-num"), hlNow);
+  const chip = document.getElementById("hl-chip");
+  if (hlNow != null && hlWas != null && hlNow !== hlWas){
+    const diff = hlNow - hlWas, pct = (100*diff/hlWas).toFixed(1);
+    chip.className = "hl-chip " + (diff > 0 ? "up" : "down");
+    chip.textContent = (diff > 0 ? "▲ " : "▼ ") + fmt(Math.abs(diff)) + ` (${diff>0?"+":""}${pct}%) vs last round`;
+  } else {
+    chip.className = "hl-chip";
+    chip.textContent = "no change vs last round";
+  }
+
   const rows = document.getElementById("board-rows");
   rows.innerHTML = "";
   for (const c of ["A","B","C","D","E"]){
@@ -447,8 +530,10 @@ function render(){
         : `<span class="delta down">▼ ${fmt(-diff)} (${pct}%)</span>`;
     }
     const quota = latest.quota && latest.quota[c] ? `<div class="quota">Quota ${latest.quota[c].toLocaleString()}</div>` : "";
+    const changed = LAST_SHOWN[c] !== undefined && LAST_SHOWN[c] !== now;
+    LAST_SHOWN[c] = now;
     rows.insertAdjacentHTML("beforeend", `
-      <div class="row">
+      <div class="row${changed ? " changed" : ""}">
         <div class="cat-cell">
           <div class="cat ${c==='D'?'d':''}">${c}</div>
           <div style="min-width:0"><div class="cname">${CAT_META[c].name}</div><div class="cdesc">${CAT_META[c].desc}</div></div>
@@ -566,21 +651,23 @@ function ago(ms){
 function updateStatus(){
   const dot = document.getElementById("status-dot");
   const txt = document.getElementById("status-text");
+  const scan = document.getElementById("scanner");
   if (!DATA || !DATA.updated) return;
   const checked = new Date(DATA.updated);
-  if (inBiddingWindow()){
-    dot.className = "status-dot live";
-    txt.textContent = `Bidding day — watching for results · last checked ${ago(Date.now()-checked)}`;
-  } else {
-    dot.className = "status-dot";
-    txt.textContent = `Up to date · last checked ${ago(Date.now()-checked)}`;
-  }
+  const live = inBiddingWindow();
+  if (dot) dot.className = live ? "status-dot live" : "status-dot";
+  if (txt) txt.textContent = live
+    ? `Bidding day — watching for results · last checked ${ago(Date.now()-checked)}`
+    : `Up to date · last checked ${ago(Date.now()-checked)}`;
+  if (scan) scan.className = live ? "scanner" : "scanner idle";
 }
 setInterval(updateStatus, 30000);
 
 /* On bidding afternoons, pull fresh data without the user refreshing. */
 async function poll(){
   if (!inBiddingWindow()) return;
+  const scan = document.getElementById("scanner");
+  if (scan) scan.className = "scanner";
   try {
     const r = await fetch("/data/latest.json?t=" + Date.now(), {cache:"no-store"});
     const d = await r.json();
