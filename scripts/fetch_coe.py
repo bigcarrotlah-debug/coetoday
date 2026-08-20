@@ -10,7 +10,8 @@ import json, math, re, urllib.request, urllib.parse
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
-DATASET_ID = "d_69b3380ad7e51aff3a7dcc84eba52b8a"
+DATASET_ID = "d_69b3380ad7e51aff3a7dcc84eba52b8a"        # LTA COE bidding results
+PQP_DATASET_ID = "d_22094bf608253d36c0c63b52d852dd6e"    # SINGSTAT: official monthly PQP
 API = "https://data.gov.sg/api/action/datastore_search"
 HEADERS = {"User-Agent": "Mozilla/5.0 (compatible; coetoday.sg pipeline; +https://coetoday.sg)"}
 ROOT = Path(__file__).resolve().parent.parent
@@ -30,10 +31,10 @@ CAT_DESC = {
     "E": "Open category",
 }
 
-def fetch_rows():
+def fetch_rows(dataset_id=DATASET_ID):
     rows, offset, limit = [], 0, 5000
     while True:
-        qs = urllib.parse.urlencode({"resource_id": DATASET_ID, "limit": limit, "offset": offset})
+        qs = urllib.parse.urlencode({"resource_id": dataset_id, "limit": limit, "offset": offset})
         req = urllib.request.Request(f"{API}?{qs}", headers=HEADERS)
         with urllib.request.urlopen(req, timeout=60) as r:
             payload = json.load(r)
@@ -47,6 +48,72 @@ def fetch_rows():
     if not rows:
         raise RuntimeError("API returned zero records - check DATASET_ID")
     return rows
+
+
+MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"]
+
+def fetch_official_pqp():
+    """
+    Pull LTA's published Prevailing Quota Premium from the SINGSTAT monthly series.
+    The dataset is pivoted: one row per data series, one column per month (e.g. '2026Jul').
+    Rows are matched on the phrase 'Prevailing Quota Premium' so a rename upstream
+    doesn't silently break us. Returns {cat: {"value": int, "month": "Jul 2026"}}.
+    """
+    try:
+        rows = fetch_rows(PQP_DATASET_ID)
+    except Exception as e:
+        print(f"Official PQP fetch failed ({e}) - falling back to estimate")
+        return {}
+
+    def cat_of(series):
+        s = series.lower()
+        if "prevailing quota premium" not in s:
+            return None
+        if "motorcycle" in s:
+            return "D"
+        if "goods" in s or "bus" in s:
+            return "C"
+        if "open" in s:
+            return "E"
+        if "up to 1600cc" in s or "up to 1,600cc" in s:
+            return "A"
+        if "above 1600cc" in s or "above 1,600cc" in s:
+            return "B"
+        return None
+
+    month_re = re.compile(r"^(\d{4})([A-Z][a-z]{2})$")
+    out = {}
+    for row in rows:
+        series = str(row.get("DataSeries", ""))
+        cat = cat_of(series)
+        if not cat:
+            continue
+        best = None
+        for key, val in row.items():
+            m = month_re.match(key)
+            if not m or val in (None, "", "na", "-"):
+                continue
+            try:
+                v = int(float(str(val).replace(",", "")))
+            except ValueError:
+                continue
+            if v <= 0:
+                continue
+            year, mon = int(m.group(1)), m.group(2)
+            if mon not in MONTHS:
+                continue
+            order = (year, MONTHS.index(mon))
+            if best is None or order > best[0]:
+                best = (order, v, f"{mon} {year}")
+        if best and (cat not in out or best[0] > out[cat]["_order"]):
+            out[cat] = {"value": best[1], "month": best[2], "_order": best[0]}
+        if cat in out:
+            print(f"  official PQP {cat}: {out[cat]['value']} ({out[cat]['month']}) <- {series[:60]}")
+    for v in out.values():
+        v.pop("_order", None)
+    if not out:
+        print("No 'Prevailing Quota Premium' rows matched - falling back to estimate")
+    return out
 
 def month_label(month_str, bidding_no):
     dt = datetime.strptime(month_str, "%Y-%m")
@@ -76,7 +143,7 @@ def next_close(now):
 def money(n):
     return "&mdash;" if n is None else "$" + f"{n:,}"
 
-def render_page(ordered, pqp):
+def render_page(ordered, pqp, official=None):
     """Bake the latest results into index.html between the marker comments."""
     if not PAGE.exists():
         print("index.html not found - skipping pre-render")
@@ -148,15 +215,23 @@ def render_page(ordered, pqp):
             else "Premiums eased across most categories." if ups <= 1
             else "Premiums were mixed across the categories.")
 
-    pqp_bits = ", ".join(f"Cat {c} {money(pqp[c])}" for c in "ABCD" if pqp.get(c))
+    official = official or {}
+    if official:
+        month_txt = next(iter(official.values()))["month"]
+        pqp_bits = ", ".join(f"Cat {c} {money(official[c]['value'])}" for c in "ABCD" if official.get(c))
+        pqp_sentence = (f'the latest Prevailing Quota Premium (PQP) published by LTA, for {month_txt}, '
+                        f'stands at {pqp_bits}')
+    else:
+        pqp_bits = ", ".join(f"Cat {c} {money(pqp[c])}" for c in "ABCD" if pqp.get(c))
+        pqp_sentence = (f'our estimated Prevailing Quota Premium (PQP), based on the last three months '
+                        f'of bidding, is {pqp_bits}')
     summary = (
         f'<p><strong>COE results for {latest["label"]} (bidding closed {date_long}).</strong> '
         f'{mood} ' + "; ".join(parts) + '. '
         f'Figures are the Quota Premium at the close of the exercise, published by LTA.</p>'
-        f'<p style="margin-top:10px">For owners renewing instead of bidding, the current Prevailing '
-        f'Quota Premium (PQP) &mdash; the three-month moving average used for COE renewal &mdash; '
-        f'stands at {pqp_bits}. The next bidding exercise opens in the following round; '
-        f'this page updates within minutes of each close.</p>'
+        f'<p style="margin-top:10px">For owners renewing instead of bidding, {pqp_sentence}. '
+        f'Renewing for 10 years costs the full PQP; renewing for 5 years costs half that. '
+        f'This page updates within minutes of each bidding close.</p>'
     )
     html = re.sub(r"<!--SUMMARY_START-->.*?<!--SUMMARY_END-->",
                   "<!--SUMMARY_START-->" + summary + "<!--SUMMARY_END-->",
@@ -221,16 +296,19 @@ def main():
         recent = [e["premiums"][cat] for e in ordered[-6:] if cat in e["premiums"]]
         pqp[cat] = round(sum(recent) / len(recent)) if recent else None
 
+    official = fetch_official_pqp()
+
     now = datetime.now(SGT)
     OUT.write_text(json.dumps({
         "updated": now.isoformat(timespec="seconds"),
         "next_close": next_close(now),
         "pqp": pqp,
+        "pqp_official": official,
         "exercises": ordered,
     }, ensure_ascii=False, indent=1))
     print(f"Wrote {OUT} - {len(ordered)} exercises, latest: {ordered[-1]['label']}")
 
-    render_page(ordered, pqp)
+    render_page(ordered, pqp, official)
 
 if __name__ == "__main__":
     main()
